@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>GitHub Bloom</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 320px; font-family: 'Inter', -apple-system, sans-serif; background: #0d1117; color: #e6edf3; font-size: 13px; line-height: 1.5; }
+
+  .header { padding: 16px 16px 12px; border-bottom: 1px solid #21262d; display: flex; align-items: center; gap: 10px; }
+  .logo { width: 28px; height: 28px; background: linear-gradient(135deg, #534AB7, #D4537E); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .header-text h1 { font-size: 14px; font-weight: 600; }
+  .header-text p { font-size: 11px; color: #7d8590; }
+
+  .tabs { display: flex; border-bottom: 1px solid #21262d; }
+  .tab { flex: 1; padding: 10px 0; text-align: center; font-size: 12px; color: #7d8590; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab.active { color: #e6edf3; border-color: #534AB7; }
+  .tab:hover:not(.active) { color: #c9d1d9; }
+
+  .panel { display: none; padding: 14px 16px; }
+  .panel.active { display: block; }
+
+  .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #7d8590; margin-bottom: 10px; }
+
+  /* Theme grid */
+  .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .theme-item { cursor: pointer; border-radius: 8px; border: 1.5px solid transparent; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #161b22; transition: all .15s; }
+  .theme-item:hover { background: #1c2128; }
+  .theme-item.active { border-color: #534AB7; }
+  .theme-swatch { display: flex; gap: 2px; }
+  .swatch-cell { width: 7px; height: 7px; border-radius: 1.5px; }
+  .theme-name { font-size: 10px; color: #7d8590; text-align: center; }
+  .theme-item.active .theme-name { color: #c9d1d9; }
+
+  /* Custom color picker */
+  .custom-picker { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+  .picker-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .picker-row:last-child { margin-bottom: 0; }
+  .picker-label { font-size: 11px; color: #7d8590; width: 48px; flex-shrink: 0; }
+  .color-swatches { display: flex; gap: 4px; flex: 1; }
+  .color-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #30363d; cursor: pointer; position: relative; overflow: hidden; transition: border-color .15s; flex-shrink: 0; }
+  .color-dot:hover { border-color: #7d8590; }
+  .color-dot input[type="color"] { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer; }
+  .hex-inputs { display: flex; gap: 4px; flex: 1; }
+  .hex-input { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; color: #c9d1d9; font-size: 10px; font-family: monospace; padding: 4px 5px; outline: none; text-align: center; }
+  .hex-input:focus { border-color: #534AB7; }
+
+  /* Mini grass preview */
+  .preview-label { font-size: 10px; color: #7d8590; margin-bottom: 6px; }
+  .mini-grass { display: flex; gap: 2px; margin-bottom: 14px; overflow: hidden; height: 50px; align-items: flex-start; }
+  .mini-col { display: flex; flex-direction: column; gap: 2px; }
+  .mini-cell { width: 7px; height: 7px; border-radius: 1.5px; }
+
+  /* Buttons */
+  .btn { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; transition: all .15s; margin-bottom: 8px; }
+  .btn:hover { background: #2d333b; border-color: #444c56; }
+  .btn.primary { background: #534AB7; border-color: #534AB7; color: #fff; }
+  .btn.primary:hover { background: #6459cc; border-color: #6459cc; }
+  .btn.danger { background: transparent; border-color: #30363d; color: #7d8590; font-size: 11px; }
+  .btn.danger:hover { color: #f85149; border-color: #f85149; }
+
+  /* AI */
+  .ai-response { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 12px; font-size: 12px; color: #7d8590; line-height: 1.6; min-height: 64px; margin-bottom: 12px; white-space: pre-wrap; }
+  .ai-response.loaded { color: #c9d1d9; }
+  .quick-btns { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+  .quick-btn { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #161b22; border: 1px solid #30363d; color: #7d8590; cursor: pointer; transition: all .15s; }
+  .quick-btn:hover { color: #c9d1d9; border-color: #444c56; }
+  textarea { width: 100%; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 12px; font-family: inherit; padding: 8px; resize: none; height: 56px; margin-bottom: 8px; outline: none; transition: border-color .15s; }
+  textarea:focus { border-color: #534AB7; }
+
+  /* Settings */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #21262d; }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 12px; color: #c9d1d9; }
+  .setting-desc { font-size: 11px; color: #7d8590; margin-top: 2px; }
+  input[type="text"], input[type="password"] { background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 11px; font-family: inherit; padding: 6px 8px; width: 100%; outline: none; transition: border-color .15s; margin-top: 8px; }
+  input:focus { border-color: #534AB7; }
+
+  /* Toggle switch */
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+  .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #30363d; border-radius: 20px; cursor: pointer; transition: .2s; }
+  .slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  input:checked + .slider { background: #534AB7; }
+  input:checked + .slider:before { transform: translateX(16px); }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">🌸</div>
+  <div class="header-text">
+    <h1>GitHub Bloom</h1>
+    <p>잔디 테마 커스터마이저</p>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="theme">테마</div>
+  <div class="tab" data-tab="ai">AI 분석</div>
+  <div class="tab" data-tab="settings">설정</div>
+</div>
+
+<!-- 테마 패널 -->
+<div class="panel active" id="panel-theme">
+  <div class="label">프리셋 테마</div>
+  <div class="theme-grid" id="theme-grid"></div>
+
+  <div class="label">커스텀 색상</div>
+  <div class="custom-picker">
+    <div class="picker-row">
+      <span class="picker-label">색상 피커</span>
+      <div class="color-swatches" id="color-dots"></div>
+    </div>
+    <div class="picker-row">
+      <span class="picker-label">Hex 값</span>
+      <div class="hex-inputs" id="hex-inputs"></div>
+    </div>
+  </div>
+
+  <div class="preview-label">미리보기</div>
+  <div class="mini-grass" id="mini-grass"></div>
+
+  <button class="btn primary" id="btn-apply">현재 탭에 적용</button>
+  <button class="btn danger" id="btn-reset">기본값으로 되돌리기</button>
+</div>
+
+<!-- AI 분석 패널 -->
+<div class="panel" id="panel-ai">
+  <div class="label">개발자 AI 분석</div>
+  <div class="ai-response" id="ai-resp">프로필 페이지를 열고 아래 버튼을 눌러보세요.</div>
+  <div class="quick-btns">
+    <button class="quick-btn" data-q="이 개발자를 한 줄로 표현하면?">한 줄 소개</button>
+    <button class="quick-btn" data-q="커밋 패턴으로 이 개발자의 성향을 분석해줘">성향 분석</button>
+    <button class="quick-btn" data-q="이 개발자에게 어울리는 다음 프로젝트를 추천해줘">프로젝트 추천</button>
+    <button class="quick-btn" data-q="이 개발자의 강점과 개선할 점은?">강점/약점</button>
+  </div>
+  <textarea id="ai-input" placeholder="직접 질문을 입력하세요..."></textarea>
+  <button class="btn primary" id="btn-ask">분석하기</button>
+</div>
+
+<!-- 설정 패널 -->
+<div class="panel" id="panel-settings">
+  <div class="label">Claude API</div>
+  <div class="setting-row" style="flex-direction:column;align-items:flex-start">
+    <div class="setting-label">API Key</div>
+    <div class="setting-desc">AI 분석 기능에 사용됩니다 (로컬 저장)</div>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+  </div>
+
+  <div class="label" style="margin-top:16px">동작 설정</div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">모든 프로필에 적용</div>
+      <div class="setting-desc">다른 사람 GitHub 프로필 방문 시에도 내 테마 유지</div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="toggle-global" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div style="margin-top:12px">
+    <button class="btn primary" id="btn-save-key">저장</button>
+  </div>
+  <div style="margin-top:4px;font-size:11px;color:#7d8590;text-align:center" id="save-msg"></div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+/* GitHub Bloom — content.css */
+/* 전환 애니메이션 제거 — 깜빡임 방지를 위해 즉시 색상 적용 */
+td[data-level],
+rect[data-level],
+.ContributionCalendar-day {
+  transition: none !important;
+}
